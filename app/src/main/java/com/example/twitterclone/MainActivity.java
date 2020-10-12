@@ -10,7 +10,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -19,11 +21,12 @@ import com.parse.LogOutCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     ListView listView;
     ArrayList arrayList;
 
@@ -35,7 +38,9 @@ public class MainActivity extends AppCompatActivity {
         arrayList=new ArrayList();
         final ArrayAdapter arrayAdapter=new ArrayAdapter(this,android.R.layout.simple_list_item_checked,arrayList);
         listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
+        listView.setOnItemClickListener(MainActivity.this);
         ParseQuery<ParseUser> parseQuery=ParseUser.getQuery();
+        parseQuery.whereNotEqualTo("username",ParseUser.getCurrentUser());
         parseQuery.findInBackground(new FindCallback<ParseUser>() {
             @Override
             public void done(List<ParseUser> objects, ParseException e) {
@@ -83,5 +88,29 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         return true;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        CheckedTextView checkedTextView=(CheckedTextView)view;
+        if (checkedTextView.isChecked())
+        {
+            Toast.makeText(MainActivity.this,arrayList.get(position)+" is Followed",Toast.LENGTH_SHORT).show();
+            ParseUser.getCurrentUser().add("fanof",arrayList.get(position));
+        }
+        else {
+            Toast.makeText(MainActivity.this,arrayList.get(position)+" is Unfollowed",Toast.LENGTH_SHORT).show();
+            ParseUser.getCurrentUser().getList("fanof").remove(arrayList.get(position));
+            
+        }
+        ParseUser.getCurrentUser().saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e==null)
+                {
+                    Toast.makeText(MainActivity.this,"Saved",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }
